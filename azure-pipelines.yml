@@ -6,6 +6,7 @@ pool:
 
 variables:
   terraformVersion: '1.6.6'
+  workingDir: 'enivironments/dev'
 
 stages:
 
@@ -24,6 +25,7 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'init'
+        workingDirectory: $(workingDir)
         backendServiceArm: 'Bootcamp-Project-2'
         backendAzureRmResourceGroupName: 'demo-rg'
         backendAzureRmStorageAccountName: 'demobackendtristore78921'
@@ -35,6 +37,7 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'plan'
+        workingDirectory: $(workingDir)
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
 
 - stage: TerraformApply
@@ -55,5 +58,6 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'apply'
+        workingDirectory: $(workingDir)
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
         commandOptions: '-auto-approve'
