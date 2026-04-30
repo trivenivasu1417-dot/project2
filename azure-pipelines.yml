@@ -1,0 +1,59 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  terraformVersion: '1.6.6'
+
+stages:
+
+- stage: TerraformPlan
+  displayName: Terraform Plan
+  jobs:
+  - job: plan
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: TerraformTaskV4@4
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: 'Bootcamp-Project-2'
+        backendAzureRmResourceGroupName: 'demo-rg'
+        backendAzureRmStorageAccountName: 'demobackendtristore78921'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: 'aks.tfstate'
+
+    - task: TerraformTaskV4@4
+      displayName: Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        environmentServiceNameAzureRM: 'Bootcamp-Project-2'
+
+- stage: TerraformApply
+  displayName: Terraform Apply
+  dependsOn: TerraformPlan
+  condition: succeeded()
+
+  jobs:
+  - job: apply
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: TerraformTaskV4@4
+      displayName: Apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        environmentServiceNameAzureRM: 'Bootcamp-Project-2'
+        commandOptions: '-auto-approve'
