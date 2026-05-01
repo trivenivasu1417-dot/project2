@@ -11,13 +11,17 @@ variables:
 stages:
 
 # =========================
-# PLAN STAGE
+# PLAN
 # =========================
 - stage: TerraformPlan
-  displayName: Terraform Plan
   jobs:
   - job: plan
     steps:
+
+    # FORCE INSTALL TERRAFORM (IMPORTANT FIX)
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
 
     # INIT
     - task: TerraformTaskV4@4
@@ -43,10 +47,9 @@ stages:
 
 
 # =========================
-# APPLY STAGE
+# APPLY
 # =========================
 - stage: TerraformApply
-  displayName: Terraform Apply
   dependsOn: TerraformPlan
   condition: succeeded()
 
@@ -54,7 +57,12 @@ stages:
   - job: apply
     steps:
 
-    # INIT (required again in new agent)
+    # FORCE INSTALL TERRAFORM AGAIN (NEW AGENT)
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    # INIT
     - task: TerraformTaskV4@4
       displayName: Terraform Init
       inputs:
