@@ -2,28 +2,30 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-22.04
+  vmImage: ubuntu-latest
 
 variables:
   terraformVersion: '1.6.6'
-  workingDir: 'enivironments/dev'
+  workingDir: 'environments/dev'
 
 stages:
 
 # =========================
-# PLAN
+# PLAN STAGE
 # =========================
 - stage: TerraformPlan
+  displayName: Terraform Plan
   jobs:
   - job: plan
     steps:
 
-    # FORCE INSTALL TERRAFORM (IMPORTANT FIX)
+    # Install Terraform
     - task: TerraformInstaller@1
+      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
-    # INIT
+    # INIT (backend config REQUIRED here only)
     - task: TerraformTaskV4@4
       displayName: Terraform Init
       inputs:
@@ -44,12 +46,18 @@ stages:
         command: 'plan'
         workingDirectory: $(workingDir)
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
+        commandOptions: '-out=tfplan'
+
+    # Publish plan artifact
+    - publish: $(workingDir)/tfplan
+      artifact: tfplan
 
 
 # =========================
-# APPLY
+# APPLY STAGE
 # =========================
 - stage: TerraformApply
+  displayName: Terraform Apply
   dependsOn: TerraformPlan
   condition: succeeded()
 
@@ -57,12 +65,13 @@ stages:
   - job: apply
     steps:
 
-    # FORCE INSTALL TERRAFORM AGAIN (NEW AGENT)
+    # Install Terraform again (required in new agent job)
     - task: TerraformInstaller@1
+      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
-    # INIT
+    # INIT again (required in separate stage)
     - task: TerraformTaskV4@4
       displayName: Terraform Init
       inputs:
@@ -75,7 +84,11 @@ stages:
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'aks.tfstate'
 
-    # APPLY
+    # Download plan file
+    - download: current
+      artifact: tfplan
+
+    # APPLY (correct way)
     - task: TerraformTaskV4@4
       displayName: Terraform Apply
       inputs:
@@ -83,4 +96,4 @@ stages:
         command: 'apply'
         workingDirectory: $(workingDir)
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
-        commandOptions: '-auto-approve'
+        commandOptions: 'tfplan'
