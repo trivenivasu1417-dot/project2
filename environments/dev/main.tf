@@ -21,8 +21,8 @@ module "vnet" {
 
   address_space = ["10.0.0.0/16"]
 }
-module "aks" {
-  source = "../../modules/aks"
+module "AKS" {
+  source = "../../modules/AKS"
 
   name                = "demo-aks"
   location            = module.rg.location
