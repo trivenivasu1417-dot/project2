@@ -11,19 +11,21 @@ variables:
 stages:
 
 # =========================
-# PLAN
+# PLAN STAGE
 # =========================
 - stage: TerraformPlan
+  displayName: Terraform Plan
   jobs:
   - job: plan
     steps:
 
     - task: TerraformInstaller@1
+      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
     - task: TerraformTaskV4@4
-      displayName: Init
+      displayName: Terraform Init
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -35,7 +37,7 @@ stages:
         backendAzureRmKey: 'aks.tfstate'
 
     - task: TerraformTaskV4@4
-      displayName: Plan
+      displayName: Terraform Plan
       inputs:
         provider: 'azurerm'
         command: 'plan'
@@ -43,14 +45,18 @@ stages:
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
         commandOptions: '-out=tfplan'
 
-    - publish: $(workingDir)/tfplan
-      artifact: tfplan
+    - task: PublishPipelineArtifact@1
+      displayName: Publish tfplan
+      inputs:
+        targetPath: '$(workingDir)/tfplan'
+        artifact: tfplan
 
 
 # =========================
-# APPLY
+# APPLY STAGE
 # =========================
 - stage: TerraformApply
+  displayName: Terraform Apply
   dependsOn: TerraformPlan
   condition: succeeded()
 
@@ -59,11 +65,12 @@ stages:
     steps:
 
     - task: TerraformInstaller@1
+      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
     - task: TerraformTaskV4@4
-      displayName: Init
+      displayName: Terraform Init
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -74,11 +81,14 @@ stages:
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'aks.tfstate'
 
-    - download: current
-      artifact: tfplan
+    - task: DownloadPipelineArtifact@2
+      displayName: Download tfplan
+      inputs:
+        artifact: tfplan
+        path: $(workingDir)
 
     - task: TerraformTaskV4@4
-      displayName: Apply
+      displayName: Terraform Apply
       inputs:
         provider: 'azurerm'
         command: 'apply'
