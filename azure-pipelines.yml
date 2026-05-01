@@ -11,23 +11,19 @@ variables:
 stages:
 
 # =========================
-# PLAN STAGE
+# PLAN
 # =========================
 - stage: TerraformPlan
-  displayName: Terraform Plan
   jobs:
   - job: plan
     steps:
 
-    # Install Terraform
     - task: TerraformInstaller@1
-      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
-    # INIT (backend config REQUIRED here only)
     - task: TerraformTaskV4@4
-      displayName: Terraform Init
+      displayName: Init
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -38,9 +34,8 @@ stages:
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'aks.tfstate'
 
-    # PLAN
     - task: TerraformTaskV4@4
-      displayName: Terraform Plan
+      displayName: Plan
       inputs:
         provider: 'azurerm'
         command: 'plan'
@@ -48,16 +43,14 @@ stages:
         environmentServiceNameAzureRM: 'Bootcamp-Project-2'
         commandOptions: '-out=tfplan'
 
-    # Publish plan artifact
     - publish: $(workingDir)/tfplan
       artifact: tfplan
 
 
 # =========================
-# APPLY STAGE
+# APPLY
 # =========================
 - stage: TerraformApply
-  displayName: Terraform Apply
   dependsOn: TerraformPlan
   condition: succeeded()
 
@@ -65,15 +58,12 @@ stages:
   - job: apply
     steps:
 
-    # Install Terraform again (required in new agent job)
     - task: TerraformInstaller@1
-      displayName: Install Terraform
       inputs:
         terraformVersion: $(terraformVersion)
 
-    # INIT again (required in separate stage)
     - task: TerraformTaskV4@4
-      displayName: Terraform Init
+      displayName: Init
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -84,13 +74,11 @@ stages:
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'aks.tfstate'
 
-    # Download plan file
     - download: current
       artifact: tfplan
 
-    # APPLY (correct way)
     - task: TerraformTaskV4@4
-      displayName: Terraform Apply
+      displayName: Apply
       inputs:
         provider: 'azurerm'
         command: 'apply'
