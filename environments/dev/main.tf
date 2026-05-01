@@ -1,7 +1,7 @@
 module "rg" {
   source   = "../../modules/rg"
 
-  name     = "demo-rg"
+  name     = "demo-rg-test"
   location = "canadacentral"
 }
   
